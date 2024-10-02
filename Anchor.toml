@@ -5,7 +5,7 @@ seeds = false
 skip-lint = false
 
 [programs.devnet]
-state_check_program = "ExuXEXbXpYwNNVrgbMA6qCLruq9NH29zmUfCBrwXmPGj"
+state_check_program = "7qEhDPXRiNuJZwSAeeqHj8uzJaRXgJ1k894J32K8dKvL"
 
 [registry]
 url = "https://api.apr.dev"
