@@ -10,19 +10,19 @@ wallet = "/home/muhammad/wallet/keypair1.json"  # Replace with your own keypair
 anchor build
 ```
 
-## Step 3: Generate a new Program Id
+## Step 3: This is will return the existing programId
 ```bash
 solana address -k target/deploy/state_check_program-keypair.json
 ```
 
 #### copy paste the keypair on lib.rs ,Anchor.toml and state-check-program.ts
 
-## Step4: 
+## Step4 Generate a new programId (): 
 ```bash
 solana-keygen new --outfile target/deploy/state_check_program-keypair.json
 
 ```
-#### This will generate a keypair file which will resemble the programId newly generated
+#### copy paste the keypair on lib.rs ,Anchor.toml and state-check-program.ts
 
 ## Step 5: Deploy the program
 ```bash
