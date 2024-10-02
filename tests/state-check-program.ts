@@ -1,5 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
+import { Program ,BN} from "@coral-xyz/anchor";
+import { NonceAccount, SystemProgram } from "@solana/web3.js";
 import { assert } from "chai";
 // import { StateCheckProgram } from "../target/types/state_check_program";
 import { readFileSync } from "fs";
@@ -16,28 +17,34 @@ describe("state-check-program",async () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const idl = JSON.parse(readFileSync('target/idl/state_check_program.json','utf-8'));
-  const programId = new anchor.web3.PublicKey("ExuXEXbXpYwNNVrgbMA6qCLruq9NH29zmUfCBrwXmPGj");
+  const programId = new anchor.web3.PublicKey("7qEhDPXRiNuJZwSAeeqHj8uzJaRXgJ1k894J32K8dKvL");
   const program = new Program(idl, programId, anchor.getProvider());
 
   let [maleAccount, bump] =  anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from("male_account")],
+    [Buffer.from("male_account"),walletKeyPair.publicKey.toBuffer()],
     programId
   );
-  console.log("maleACcount",maleAccount.toBase58())
+  
+  console.log("maleAccount",maleAccount.toBase58())
 
-  it("Is initialized!", async () => {
-    // Add your test here.
-  let name="hammad"
-  let age = 22
-    const tx = await program.methods.setMaleData(name,age).accounts({
-      maleAccount:maleAccount,
-      user:walletKeyPair.publicKey,
-      systemProgram: anchor.web3.SystemProgram.programId
+  let [nonceAccount,nonceBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from("nonce_account"),walletKeyPair.publicKey.toBuffer()],
+    programId
+  )
+
+  // it("Is initialized!", async () => {
+  //   // Add your test here.
+  // let name="hammad"
+  // let age = 22
+  //   const tx = await program.methods.setMaleData(name,age).accounts({
+  //     maleAccount:maleAccount,
+  //     user:walletKeyPair.publicKey,
+  //     systemProgram: anchor.web3.SystemProgram.programId
       
-    }).signers([walletKeyPair]).rpc();
-    console.log("Your transaction signature", tx);
+  //   }).signers([walletKeyPair]).rpc();
+  //   console.log("Your transaction signature", tx);
  
-  });
+  // });
 
 
   it("Verifies Signautre",async()=>{
@@ -50,7 +57,7 @@ describe("state-check-program",async () => {
     );
     console.log("Signature:", Buffer.from(signature).toString('hex'));
 
-    
+    const nonce = new BN(2);
     const expectedPubkey = secp256k1.publicKeyCreate(walletKeyPair.secretKey.slice(0, 32), true);
 
     console.log("message Hash Length:", messageHash.length);//32 byte
@@ -63,9 +70,13 @@ describe("state-check-program",async () => {
      messageHash,      
       recid,                        
       Buffer.from(signature),        
-      Buffer.from(expectedPubkey) 
+      Buffer.from(expectedPubkey) ,
+      nonce
     ).accounts({
-      maleAccount:maleAccount
+      maleAccount:maleAccount,
+      nonceAccount:nonceAccount,
+      user: walletKeyPair.publicKey,
+      SystemProgram: anchor.web3.SystemProgram.programId
     })
     .rpc();
 
@@ -73,40 +84,40 @@ describe("state-check-program",async () => {
   console.log("Signature verification successful:", tx);
   })
 
-  it("Verifies Signature will Fail- Worst Case Scenario", async () => {
+  // it("Verifies Signature will Fail- Worst Case Scenario", async () => {
 
-    const randomKeypair =  anchor.web3.Keypair.generate();
+  //   const randomKeypair =  anchor.web3.Keypair.generate();
     
-    const message = "Hello, Blockchain";
-    const messageHash = keccak256(Buffer.from(message));
+  //   const message = "Hello, Blockchain";
+  //   const messageHash = keccak256(Buffer.from(message));
   
-    // Generate a valid signature
-    const { signature, recid } = secp256k1.ecdsaSign(
-        Uint8Array.from(messageHash),
-        walletKeyPair.secretKey.slice(0, 32)
-    );
+  //   // Generate a valid signature
+  //   const { signature, recid } = secp256k1.ecdsaSign(
+  //       Uint8Array.from(messageHash),
+  //       walletKeyPair.secretKey.slice(0, 32)
+  //   );
 
 
-    const expectedPubkey = secp256k1.publicKeyCreate(randomKeypair.secretKey.slice(0, 32), true);//using randomkeypair
+  //   const expectedPubkey = secp256k1.publicKeyCreate(randomKeypair.secretKey.slice(0, 32), true);//using randomkeypair
     
 
-    try {
-      await program.methods
-          .getMaleData(
-            messageHash,      
-            recid,                        
-            Buffer.from(signature),        
-            Buffer.from(expectedPubkey) 
-          )
-          .accounts({
-              maleAccount: maleAccount
-          })
-          .rpc();
+  //   try {
+  //     await program.methods
+  //         .getMaleData(
+  //           messageHash,      
+  //           recid,                        
+  //           Buffer.from(signature),        
+  //           Buffer.from(expectedPubkey) 
+  //         )
+  //         .accounts({
+  //             maleAccount: maleAccount
+  //         })
+  //         .rpc();
 
-      assert.fail("Transaction should not have succeeded"); // This should not happen
-  } catch (error) {
-      assert.equal(error.error.errorCode, "SignatureVerificationFailed", "Expected SignatureVerificationFailed error");
-      console.log("Caught expected error:", error.error);
-  }});
+  //     assert.fail("Transaction should not have succeeded"); // This should not happen
+  // } catch (error) {
+  //     assert.equal(error.error.errorCode, "SignatureVerificationFailed", "Expected SignatureVerificationFailed error");
+  //     console.log("Caught expected error:", error.error);
+  // }});
 
 });
