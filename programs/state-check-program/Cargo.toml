@@ -17,6 +17,19 @@ default = []
 
 [dependencies]
 anchor-lang = {version = "0.29.0", features = ["init-if-needed"]}
+
 solana-program = "1.18.8"
+solana-ed25519-instruction = "0.2.1"
+derivation-path = { version = "0.2.0", default-features = false }
+sha2 = { version = "0.10.1", default-features = false }
+hmac = { version = "0.12.0", default-features = false }
+ed25519-dalek = { version = "2.0.0", default-features = false, features = ["rand_core"] }
+base64 = "0.22.1"
+hex = "0.4.3"
+
+
+[dev-dependencies]
+solana-sdk = "1.18.8"
+
 
 
