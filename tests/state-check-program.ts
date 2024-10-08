@@ -22,7 +22,7 @@ describe("state-check-program",async () => {
   const provider = anchor.AnchorProvider.env();
   anchor.setProvider(provider);
   const idl = JSON.parse(readFileSync('target/idl/state_check_program.json','utf-8'));
-  const programId = new anchor.web3.PublicKey("7UpNbJTAT5jjni7qXeS1j4SfzP9JrnyaPyfzkMst3ZCr");
+  const programId = new anchor.web3.PublicKey("4vegiiytVNFYtxwSZQ6KFi1P2ZyixmkYmsAfaSJeCkvY");
   const program = new Program(idl, programId, anchor.getProvider());
 
   let [maleAccount, bump] =  anchor.web3.PublicKey.findProgramAddressSync(
@@ -63,7 +63,7 @@ describe("state-check-program",async () => {
 
     console.log("Buffer Signature: ", Buffer.from(signature).toString('hex'));
     console.log("Signature & encoded Message",signature,encodedMessage)
-    const nonce = new BN(9);
+    const nonce = new BN(3);
 const ed25519Instruction = Ed25519Program.createInstructionWithPublicKey({
   publicKey:walletKeyPair.publicKey.toBytes(),
   message: encodedMessage,
@@ -76,7 +76,8 @@ console.log("ed25519Instruction",ed25519Instruction);
     .getMaleData(
       Buffer.from(signature),        
       Buffer.from(encodedMessage),      
-      Buffer.from(walletKeyPair.publicKey.toBytes()) ,
+      Buffer.from(walletKeyPair.publicKey.toBytes()),
+      nonce
     ).accounts({
       maleAccount:maleAccount,
       nonceAccount:nonceAccount,
