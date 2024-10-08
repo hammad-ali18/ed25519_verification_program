@@ -14,7 +14,7 @@ use ed25519_dalek::VerifyingKey;
 use borsh::{BorshSerialize,BorshDeserialize};
 use solana_program::sysvar::instructions::{load_instruction_at_checked};
 use hex;
-declare_id!("7UpNbJTAT5jjni7qXeS1j4SfzP9JrnyaPyfzkMst3ZCr");
+declare_id!("4vegiiytVNFYtxwSZQ6KFi1P2ZyixmkYmsAfaSJeCkvY");
 #[program]
 pub mod state_check_program {
 
@@ -40,6 +40,7 @@ pub mod state_check_program {
         _signature: Vec<u8>,          // Use Vec<u8> for the signature
         _message: Vec<u8>,              // Keep message as a byte slice
         _pubkey_from_sig: Vec<u8>,    // Use Vec<u8> for the public key
+        nonce: u64,
     ) -> Result<()> {
         let accounts = ctx.accounts;
         let _nonce_account = &mut accounts.nonce_account;
@@ -50,7 +51,9 @@ pub mod state_check_program {
         instruction_sysvar,
         &_pubkey_from_sig,   // Pass the public key
         &_message,           // Pass the message
-        &_signature          // Pass the signature
+        &_signature,          // Pass the signature
+        nonce,
+        &mut accounts.nonce_account,
     );
     verification_result.map_err(|_| Errorcode::SignatureVerificationFailed)?;
 
@@ -66,8 +69,21 @@ pub fn verify_ed25519_instruction(
     instruction_sysvar: &AccountInfo,  // Passed from sysvar
     expected_public_key: &[u8],        // Public key as a byte slice
     message: &[u8],                    // Message as a byte slice
-    signature: &[u8]                   // Signature as a byte slice
+    signature: &[u8],
+    nonce: u64,
+    nonce_account: &mut Nonce,                 // Signature as a byte slice
 ) -> Result<()> {
+ 
+    if nonce ==0 || nonce <= nonce_account.last_nonce {
+        return err!(Errorcode::NonceAlreadyUsed);
+    }
+  
+    if signature.len() != 64 {
+        return err!(Errorcode::InvalidSignatureLength);
+    }
+    if expected_public_key.len() != 32 {
+        return err!(Errorcode::InvalidPublicKeyLength);
+    }
     // Load the current instruction index
     msg!("hi 0");
     let current_index = load_current_index_checked(instruction_sysvar)?;
@@ -122,7 +138,7 @@ pub fn verify_ed25519_instruction(
     if &instruction_data[sig_start..sig_end] != signature {
         return Err(Errorcode::InvalidSignature.into());
     }
-
+    nonce_account.last_nonce = nonce;
     msg!("hi 8");
 
     Ok(())
@@ -209,10 +225,9 @@ pub enum Errorcode {
     SignatureVerificationFailed,
     #[msg("Signature verification failed.")]
     InvalidPublicKeyLength,
-    #[msg("Nonce already used or invalid.")]
+    #[msg("Nonce already used or dont start with 0.")]
     NonceAlreadyUsed,
-    #[msg("Nonce already used or invalid.")]
-    InvalidNonce,
+
 
     MissingEd25519Instruction,
     InvalidEd25519Instruction,
